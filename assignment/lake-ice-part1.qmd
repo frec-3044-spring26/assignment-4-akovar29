@@ -61,10 +61,13 @@ Be sure that the title, x-axis, and y-axis labels are clearly labeled.
 **Answer 1:**
 
 ```{r}
+sunapee$ice_off_doy <- as.numeric(sunapee$ice_off_doy)
+# Had to change the data type of ice_off_doy since it was a string and not a double
+
 ggplot(sunapee, aes(x = year, y = ice_off_doy)) +
   geom_point() +
   geom_line() +
-  labs(x = "Year", y = "Day of Year", title = "Year vs. Day of the Year With Ice-Off")
+  labs(x = "Year", y = "Ice Off Day of Year", title = "Year vs. Ice Off Day of Year at Lake Sunapee")
 ```
 
 # How does ice cover change over time at Lake Sunapee?
@@ -84,7 +87,7 @@ Use the `lm` function to predict `ice_off_doy` as a function (`~`) of the year f
 Create an object called `fit` that contains the results of the linear model.
 
 ```{r}
-fit <- lm(sunapee$ice_off_doy ~ sunapee$year)
+fit <- lm(ice_off_doy ~ year, data = sunapee)
 ```
 
 Then, use the function `summary` to explore the result of the `lm` function.
@@ -138,6 +141,7 @@ We will use a histogram to visually assess whether this requirement is met. Firs
 You will use a histogram to examine the residuals. First, the code uses the coefficients to predict the yearly ice-off DOY. Second, calculate the residuals by subtracting the predicted ice-off DOY from the observed DOY.
 
 ```{r}
+sunapee$ice_off_doy <- as.numeric(sunapee$ice_off_doy)
 sunapee <- sunapee %>% 
   mutate(predicted = fit$coefficients[1] + year * fit$coefficients[2], 
          residual = ice_off_doy - predicted) #Observed - Predicted
@@ -150,7 +154,10 @@ Use the [`add_predictions()`](https://modelr.tidyverse.org/reference/add_predict
 **Answer 5:**
 
 ```{r}
+library(modelr)
 
+sunapee <- add_predictions(sunapee, fit)
+sunapee <- add_residuals(sunapee, fit)
 ```
 
 Now, to visualize the residuals, use `geom_histogram()` to plot them as a histogram. I recommend using a bin width of 10 in the histogram.
@@ -162,9 +169,10 @@ Show Histogram and answer the following question: do the residuals meet the assu
 **Answer 6:**
 
 ```{r}
-
+ggplot(sunapee) +
+  geom_histogram(aes(x = resid), bins = 10)
 ```
-
+Looking at the histogram, it does appear that the data has a mostly normal distribution as it's centered around zero and tapers off to the left and right with no noticeable outliers in frequency.
 
 ## The slope is different from zero
 
@@ -175,7 +183,7 @@ A slope could appear to be higher or lower than zero, but the uncertainty in the
 Based on the `summary()` above, what is the p-value for the slope?
 
 **Answer 7:**
-
+According to the summary, the p-value for the slope is 2.504e-09.
 ## The slope physically meaningful
 
 A slope value could have a low probability of being 0 (thus we have a strong belief that it is not zero), but the magnitude of change is functionally meaningless in the physical world (i.e., the rate of change is so small that we would not think much of it). This can occur particularly when analyzing large datasets.
@@ -185,6 +193,7 @@ A slope value could have a low probability of being 0 (thus we have a strong bel
 Based on the slope value, how many more years are needed to pass before the lake has a 1 week change in ice off doy? Do you think this is meaningful? Why?
 
 **Answer 8:**
+Using the slope value of -0.1060227, it would take about 7 years to create a 1 week change in ice off doy. This is meaningful as it shows the effects of climate change as warmer weather causes the ice off at Lake Sunapee to occur earlier every year.
 
 ## Overall model assessment
 
@@ -193,13 +202,17 @@ Based on the slope value, how many more years are needed to pass before the lake
 How comfortable are you proceeding with using this linear model for additional analysis and prediction? Why? (I am not looking for your gut answer, rather I want you to apply concepts taught in this module to justify your answer)
 
 **Answer 9:**
-
+Since the p-value of the model is less than 0.05, it can be determined that the relationship between the year and the ice off day of year is statistically significant and therefore the model can be used for additional analysis/prediction.
 **Question 10:**
 Now plot the data for Lake Sunapee (just like above - year on x-axis vs. ice of doy on y axis) but add the line from your regression results (e.g., fit intercept and slope). You will use the [`geom_abline`](https://ggplot2.tidyverse.org/reference/geom_abline.html). 
 
 **Answer 10:**
 ```{r}
-
+ggplot(sunapee, aes(x = year, y = ice_off_doy)) +
+  geom_point() +
+  geom_line() +
+  geom_abline(slope = fit$coefficients[2], intercept = fit$coefficients[1], color = "blue") +
+  labs(x = "Year", y = "Day of Year", title = "Year vs. Ice Off Day of Year at Lake Sunapee")
 ```
 
 **Question 11:**
